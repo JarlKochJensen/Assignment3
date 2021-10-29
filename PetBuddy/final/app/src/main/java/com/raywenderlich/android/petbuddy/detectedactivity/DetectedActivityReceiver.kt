@@ -75,52 +75,12 @@ class DetectedActivityReceiver : BroadcastReceiver() {
           PendingIntent.FLAG_UPDATE_CURRENT)
     }
   }
-    /*
-    fun generateNoteOnSD(context: Context?, sFileName: String?, sBody: String?) {
-
-            try {
-                val root = File(Environment.getExternalStorageDirectory(), "config")
-                Log.d("TAG", "File created")
-                if (!root.exists()) {
-                    root.mkdirs()
-                }
-                val gpxfile = File(root, sFileName)
-                val writer = FileWriter(gpxfile)
-                writer.append(sBody)
-                Log.d("TAG", "appended data")
-                writer.flush()
-                writer.close()
-                Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Log.e("Exception", "File write failed: " + e.toString())
-            }
-        }
-     */
-/*
-  fun showactivity(detectedActivity: DetectedActivity, detectedActivities: List<DetectedActivity>,
-                     context: Context) : SupportedActivity{
-        return SupportedActivity.fromActivityType(detectedActivity.type)
-    }
-
-
- */
 
     override fun onReceive(context: Context, intent: Intent) {
-
+        //Extracter result og kører det gennem en detector
         if (ActivityRecognitionResult.hasResult(intent)) {
-
             val result = ActivityRecognitionResult.extractResult(intent)
-            Log.d("TAG", result.getMostProbableActivity().toString() + "Time: " + result.getElapsedRealtimeMillis())
-
-
-           // kan skabe et problem, da getmostprobable giver alt muligt frem for de 3 aktvitier. den vil basicvally
-           // smid et illegallexception (tjek supportedactivity)
-
-            Log.d("TAGGGG", SupportedActivity.fromActivityType(result.getMostProbableActivity().type).toString()+ "Time: " + result.getElapsedRealtimeMillis())
-            writeToFile(result.getMostProbableActivity().toString() + "  Time: " + result.getElapsedRealtimeMillis(), context)
-            //generateNoteOnSD(context, "config.txt", result.getMostProbableActivity().toString() + "Time: " + result.getElapsedRealtimeMillis())
             result?.let { handleDetectedActivities(it.probableActivities, context) }
-
         }
     }
 
@@ -144,9 +104,9 @@ class DetectedActivityReceiver : BroadcastReceiver() {
             outputStreamWriter.write(data)
             outputStreamWriter.close()
             writeFileOnInternalStorage(context,"config.txt",data)
-            Log.d("TAG", "Det virker")
+            Log.d("FileWriteStatus", "Write to file success")
         } catch (e: IOException) {
-            Log.e("Exception", "File write failed: " + e.toString())
+            Log.e("FileWriteStatus", "File write failed: " + e.toString())
         }
     }
 
@@ -183,6 +143,9 @@ class DetectedActivityReceiver : BroadcastReceiver() {
           if (isNotEmpty()) {
             showNotification(this[0], context)
 
+              //Printer mest probable activity, sorteret i arrayet, og currentTimeMillis til fil og logger det.
+              Log.d("DetectedActivity", this[0].toString() + "Time: " + System.currentTimeMillis())
+              writeToFile(this[0].toString() + "Time: " + System.currentTimeMillis(), context)
           }
         }
   }
@@ -199,8 +162,7 @@ class DetectedActivityReceiver : BroadcastReceiver() {
         PendingIntent.FLAG_UPDATE_CURRENT)
 
     val activity = SupportedActivity.fromActivityType(detectedActivity.type)
-
-    //  Log.i("GVNKWEFGMNW",this[0])
+      
     val builder = NotificationCompat.Builder(context, DETECTED_ACTIVITY_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentTitle(context.getString(activity.activityText))

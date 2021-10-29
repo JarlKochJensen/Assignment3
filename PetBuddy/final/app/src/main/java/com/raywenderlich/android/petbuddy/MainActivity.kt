@@ -125,7 +125,6 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun setDetectedActivity(supportedActivity: SupportedActivity) {
-    activityImage.setImageDrawable(ContextCompat.getDrawable(this, supportedActivity.activityImage))
     activityTitle.text = getString(supportedActivity.activityText)
   }
 
