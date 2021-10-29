@@ -49,9 +49,18 @@ import com.raywenderlich.android.petbuddy.MainActivity
 import com.raywenderlich.android.petbuddy.R
 import com.raywenderlich.android.petbuddy.SUPPORTED_ACTIVITY_KEY
 import com.raywenderlich.android.petbuddy.SupportedActivity
-
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.io.IOException
+import java.io.FileOutputStream
+import android.widget.Toast
+import java.io.File
+import java.io.FileWriter
+import android.os.Environment
 private const val DETECTED_PENDING_INTENT_REQUEST_CODE = 100
 private const val RELIABLE_CONFIDENCE = 75
+
+
 
 private const val DETECTED_ACTIVITY_CHANNEL_ID = "detected_activity_channel_id"
 const val DETECTED_ACTIVITY_NOTIFICATION_ID = 10
@@ -66,16 +75,97 @@ class DetectedActivityReceiver : BroadcastReceiver() {
           PendingIntent.FLAG_UPDATE_CURRENT)
     }
   }
+    /*
+    fun generateNoteOnSD(context: Context?, sFileName: String?, sBody: String?) {
 
-  override fun onReceive(context: Context, intent: Intent) {
-    if (ActivityRecognitionResult.hasResult(intent)) {
-      val result = ActivityRecognitionResult.extractResult(intent)
-        Log.d("TAG", result.getMostProbableActivity().toString() + "Time: " + result.getElapsedRealtimeMillis())
-      result?.let { handleDetectedActivities(it.probableActivities, context) }
+            try {
+                val root = File(Environment.getExternalStorageDirectory(), "config")
+                Log.d("TAG", "File created")
+                if (!root.exists()) {
+                    root.mkdirs()
+                }
+                val gpxfile = File(root, sFileName)
+                val writer = FileWriter(gpxfile)
+                writer.append(sBody)
+                Log.d("TAG", "appended data")
+                writer.flush()
+                writer.close()
+                Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e("Exception", "File write failed: " + e.toString())
+            }
+        }
+     */
+/*
+  fun showactivity(detectedActivity: DetectedActivity, detectedActivities: List<DetectedActivity>,
+                     context: Context) : SupportedActivity{
+        return SupportedActivity.fromActivityType(detectedActivity.type)
     }
-  }
 
 
+ */
+
+    override fun onReceive(context: Context, intent: Intent) {
+
+        if (ActivityRecognitionResult.hasResult(intent)) {
+
+            val result = ActivityRecognitionResult.extractResult(intent)
+            Log.d("TAG", result.getMostProbableActivity().toString() + "Time: " + result.getElapsedRealtimeMillis())
+
+
+           // kan skabe et problem, da getmostprobable giver alt muligt frem for de 3 aktvitier. den vil basicvally
+           // smid et illegallexception (tjek supportedactivity)
+
+            Log.d("TAGGGG", SupportedActivity.fromActivityType(result.getMostProbableActivity().type).toString()+ "Time: " + result.getElapsedRealtimeMillis())
+            writeToFile(result.getMostProbableActivity().toString() + "  Time: " + result.getElapsedRealtimeMillis(), context)
+            //generateNoteOnSD(context, "config.txt", result.getMostProbableActivity().toString() + "Time: " + result.getElapsedRealtimeMillis())
+            result?.let { handleDetectedActivities(it.probableActivities, context) }
+
+        }
+    }
+
+
+    private fun writeToFile(data: String, context: Context) {
+        val directory: File? = context.getFilesDir() //getFilesDir() or getExternalFilesDir(null); for external storage
+
+        val file = File(directory, "config.txt")
+
+        var fos: FileOutputStream
+        try {
+            fos = FileOutputStream(file)
+            fos.write(12)
+            fos.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        try {
+            val outputStreamWriter =
+                OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE))
+            outputStreamWriter.write(data)
+            outputStreamWriter.close()
+            writeFileOnInternalStorage(context,"config.txt",data)
+            Log.d("TAG", "Det virker")
+        } catch (e: IOException) {
+            Log.e("Exception", "File write failed: " + e.toString())
+        }
+    }
+
+
+    fun writeFileOnInternalStorage(mcoContext: Context, sFileName: String?, sBody: String?) {
+        val dir = File(mcoContext.filesDir, "skrrr")
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+        try {
+            val gpxfile = File(dir, sFileName)
+            val writer = FileWriter(gpxfile)
+            writer.append(sBody)
+            writer.flush()
+            writer.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
 
   private fun handleDetectedActivities(detectedActivities: List<DetectedActivity>,
@@ -92,9 +182,12 @@ class DetectedActivityReceiver : BroadcastReceiver() {
 
           if (isNotEmpty()) {
             showNotification(this[0], context)
+
           }
         }
   }
+
+
 
   private fun showNotification(detectedActivity: DetectedActivity, context: Context) {
     createNotificationChannel(context)
@@ -107,6 +200,7 @@ class DetectedActivityReceiver : BroadcastReceiver() {
 
     val activity = SupportedActivity.fromActivityType(detectedActivity.type)
 
+    //  Log.i("GVNKWEFGMNW",this[0])
     val builder = NotificationCompat.Builder(context, DETECTED_ACTIVITY_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentTitle(context.getString(activity.activityText))
