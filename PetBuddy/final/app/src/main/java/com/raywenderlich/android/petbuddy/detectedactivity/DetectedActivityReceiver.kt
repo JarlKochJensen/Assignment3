@@ -86,50 +86,19 @@ class DetectedActivityReceiver : BroadcastReceiver() {
 
 
     private fun writeToFile(data: String, context: Context) {
-        val directory: File? = context.getFilesDir() //getFilesDir() or getExternalFilesDir(null); for external storage
-
-        val file = File(directory, "config.txt")
-
-        var fos: FileOutputStream
-        try {
-            fos = FileOutputStream(file)
-            fos.write(12)
-            fos.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
         try {
             val outputStreamWriter =
-                OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE))
-            outputStreamWriter.write(data)
+                OutputStreamWriter(context.openFileOutput("activity_log", Context.MODE_APPEND))
+            outputStreamWriter.append(data)
+            outputStreamWriter.append(System.getProperty("line.separator")); // this will add new line ;
             outputStreamWriter.close()
-            writeFileOnInternalStorage(context,"config.txt",data)
             Log.d("FileWriteStatus", "Write to file success")
         } catch (e: IOException) {
             Log.e("FileWriteStatus", "File write failed: " + e.toString())
         }
     }
 
-
-    fun writeFileOnInternalStorage(mcoContext: Context, sFileName: String?, sBody: String?) {
-        val dir = File(mcoContext.filesDir, "skrrr")
-        if (!dir.exists()) {
-            dir.mkdir()
-        }
-        try {
-            val gpxfile = File(dir, sFileName)
-            val writer = FileWriter(gpxfile)
-            writer.append(sBody)
-            writer.flush()
-            writer.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-
-  private fun handleDetectedActivities(detectedActivities: List<DetectedActivity>,
-      context: Context) {
+  private fun handleDetectedActivities(detectedActivities: List<DetectedActivity>, context: Context) {
     detectedActivities
         .filter {
           it.type == DetectedActivity.STILL ||
@@ -143,7 +112,7 @@ class DetectedActivityReceiver : BroadcastReceiver() {
           if (isNotEmpty()) {
             showNotification(this[0], context)
 
-              //Printer mest probable activity, sorteret i arrayet, og currentTimeMillis til fil og logger det.
+              //Printer mest probable activity, sorteret i arrayet, og currentTimeMillis til log og filewriter.
               Log.d("DetectedActivity", this[0].toString() + "Time: " + System.currentTimeMillis())
               writeToFile(this[0].toString() + "Time: " + System.currentTimeMillis(), context)
           }
@@ -166,7 +135,7 @@ class DetectedActivityReceiver : BroadcastReceiver() {
     val builder = NotificationCompat.Builder(context, DETECTED_ACTIVITY_CHANNEL_ID)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentTitle(context.getString(activity.activityText))
-        .setContentText("Your pet is ${detectedActivity.confidence}% sure of it")
+        .setContentText("Confidence level is ${detectedActivity.confidence}%")
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
         .setContentIntent(pendingIntent)
         .setOnlyAlertOnce(true)
